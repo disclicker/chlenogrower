@@ -67,7 +67,7 @@ def start_fight(message):
             else:
                 bot.reply_to(message, f'{message.from_user.first_name} бросил вызов чату со ставкой {fin} см', reply_markup=markup)
         else:
-            bot.send_message(message.chat.id, "После /pvp напиши длину ставки целым положительным числом или /pvp all если хочешь поставить всю письку")
+            bot.send_message(message.chat.id, "После /pvp напиши длину ставки целым положительным числом или  /pvp all если хочешь поставить всю письку")
         
 
 @bot.callback_query_handler(func=lambda callback: True)
@@ -122,26 +122,43 @@ def show_top(message):
     conn.close()
     bot.send_message(message.chat.id, info, parse_mode='HTML')
 
+@bot.message_handler(commands=['show_id'])
+def show_all_ids(message):
+    conn = sqlite3.connect('data.sql')
+    cur = conn.cursor()
+    cur.execute('SELECT name, id FROM users ORDER BY length DESC')
+    res = cur.fetchall()
+    info = 'ID участников:\n\n'
+    place = 1
+    for name, id in res:
+        info += f'{place}) {name} — {id}\n'
+        place += 1
+    cur.close()
+    conn.close()
+    bot.send_message(message.chat.id, info)
 
-@bot.message_handler(commands=['add_secret'])
-def add_length(message):
-    if not if_exists(message.from_user.id):
-        register_user(message.from_user.id, message.from_user.first_name)
-    
-    set_length(message.from_user.id, get_length(message.from_user.id) + 5)
-    bot.send_message(message.chat.id, f'Пися {message.from_user.first_name} теперь на 5 см больше')
+@bot.message_handler(commands=['set_secretly_very'])
+def add_length_chosen(message):
+    tx = message.text.strip()
+    user_id = int(tx[18:].strip())
+    bot.register_next_step_handler(message, getcm, user_id)
     update_top_positions()
     update_record_length(message.from_user.id)
 
+def getcm(message, user_id):
+    lng = int(message.text.strip())
+    set_length(user_id, lng)
 
 @bot.message_handler(commands=['grow'])
 def grow_meat(message):
+    if not if_exists(message.from_user.id):
+        register_user(message.from_user.id, message.from_user.first_name)
     tm = datetime.now(moscow)
     day = str(tm.date().year)+'.'+str(tm.date().month)+'.'+str(tm.date().day)
     if day == get_last_grown(message.from_user.id):
         bot.reply_to(message, f"Ты уже растил пиписю сегодня, следующая попытка через {23 - tm.hour} ч. {59 - tm.minute} мин")
         return
-    pls = (random.randint(0, 10000000000) % 40) - 20
+    pls = (random.randint(0, 10000000000) % 20) - 5
     if get_length(message.from_user.id) + pls <= 0:
         pls = 1
     set_length(message.from_user.id, get_length(message.from_user.id) + pls)
@@ -403,5 +420,13 @@ def get_winner(user_id1, user_id2):
     if num1 > num2:
         return user_id1
     return user_id2
+def get_id_by_name(name):
+    conn = sqlite3.connect('data.sql')
+    cur = conn.cursor()
+    cur.execute(f'SELECT id FROM users WHERE name = {name}')
+    id = int(cur.fetchone()[0])
+    cur.close()
+    conn.close()
+    return id
 
 bot.polling(none_stop=True)
