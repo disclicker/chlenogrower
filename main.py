@@ -396,8 +396,8 @@ def update_record_length(user_id):
 def get_winner(user_id1, user_id2):
     place1 = get_top_position(user_id1)
     place2 = get_top_position(user_id2)
-    mn1 = -place1 * 0.035 + 1.245
-    mn2 = -place2 * 0.035 + 1.245
+    mn1 = place1 * 0.035 + 1.245
+    mn2 = place2 * 0.035 + 1.245
     num1 = (random.randint(0, 10000000000) % 10000) * mn1
     num2 = (random.randint(0, 10000000000) % 10000) * mn2
     if num1 > num2:
