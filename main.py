@@ -420,13 +420,5 @@ def get_winner(user_id1, user_id2):
     if num1 > num2:
         return user_id1
     return user_id2
-def get_id_by_name(name):
-    conn = sqlite3.connect('data.sql')
-    cur = conn.cursor()
-    cur.execute(f'SELECT id FROM users WHERE name = {name}')
-    id = int(cur.fetchone()[0])
-    cur.close()
-    conn.close()
-    return id
 
 bot.polling(none_stop=True)
